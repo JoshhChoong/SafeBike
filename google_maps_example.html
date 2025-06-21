@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A* Path with Google Maps</title>
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="number"] {
+            padding: 5px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .path-info {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #e8f5e8;
+            border-radius: 3px;
+        }
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚶‍♂️ Safwalk Route Visualization</h1>
+        <p>A* Pathfinding with Streetlight Visibility Optimization</p>
+    </div>
+    
+    <div class="controls">
+        <div class="input-group">
+            <label for="pathColor">Path Color:</label>
+            <input type="color" id="pathColor" value="#00FF00">
+            <label for="pathWeight">Path Weight:</label>
+            <input type="number" id="pathWeight" value="4" min="1" max="10">
+        </div>
+        
+        <button onclick="loadPathFromFile()">🗺️ Load A* Route</button>
+        <button onclick="clearPath()">🗑️ Clear Path</button>
+        <button onclick="fitToRoute()">🎯 Fit to Route</button>
+    </div>
+    
+    <div id="pathInfo" class="path-info" style="display: none;">
+        <strong>Path Information:</strong>
+        <div id="pathDetails"></div>
+    </div>
+    
+    <div id="map"></div>
+
+    <script>
+        let map;
+        let currentPath;
+        let markers = [];
+        let pathCoordinates = [];
+
+        function initMap() {
+            // Initialize map centered on the route area
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 43.504894, lng: -80.518974 },
+                zoom: 13,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            });
+            
+            // Auto-load the route after map initializes
+            setTimeout(loadPathFromFile, 1000);
+        }
+
+        function addMarker(position, title, color = '#FF0000') {
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                title: title,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: color,
+                    fillOpacity: 1,
+                    strokeColor: '#000000',
+                    strokeWeight: 2
+                }
+            });
+            markers.push(marker);
+            return marker;
+        }
+
+        function clearMarkers() {
+            markers.forEach(marker => marker.setMap(null));
+            markers = [];
+        }
+
+        function clearPath() {
+            if (currentPath) {
+                currentPath.setMap(null);
+                currentPath = null;
+            }
+            clearMarkers();
+            document.getElementById("pathInfo").style.display = "none";
+        }
+
+        function drawPath(coordinates, color = "#00FF00", weight = 4, opacity = 1.0) {
+            // Clear existing path
+            if (currentPath) {
+                currentPath.setMap(null);
+            }
+            
+            // Clear existing markers
+            clearMarkers();
+            
+            if (!coordinates || coordinates.length === 0) {
+                alert("No coordinates provided");
+                return;
+            }
+
+            // Add start and end markers
+            addMarker(coordinates[0], "Start", "#00FF00");
+            addMarker(coordinates[coordinates.length - 1], "End", "#FF0000");
+
+            // Create polyline
+            currentPath = new google.maps.Polyline({
+                path: coordinates,
+                geodesic: true,
+                strokeColor: color,
+                strokeOpacity: opacity,
+                strokeWeight: weight
+            });
+
+            currentPath.setMap(map);
+
+            // Fit map to show entire path
+            fitToRoute();
+
+            // Display path information
+            displayPathInfo(coordinates);
+        }
+
+        function displayPathInfo(coordinates) {
+            const distance = calculateDistance(coordinates);
+            const info = `
+                <div>Total coordinates: ${coordinates.length}</div>
+                <div>Approximate distance: ${distance.toFixed(2)} km</div>
+                <div>Start: (${coordinates[0].lat.toFixed(6)}, ${coordinates[0].lng.toFixed(6)})</div>
+                <div>End: (${coordinates[coordinates.length-1].lat.toFixed(6)}, ${coordinates[coordinates.length-1].lng.toFixed(6)})</div>
+            `;
+            
+            document.getElementById("pathDetails").innerHTML = info;
+            document.getElementById("pathInfo").style.display = "block";
+        }
+
+        function calculateDistance(coordinates) {
+            let totalDistance = 0;
+            for (let i = 1; i < coordinates.length; i++) {
+                const prev = coordinates[i - 1];
+                const curr = coordinates[i];
+                totalDistance += google.maps.geometry.spherical.computeDistanceBetween(
+                    new google.maps.LatLng(prev.lat, prev.lng),
+                    new google.maps.LatLng(curr.lat, curr.lng)
+                );
+            }
+            return totalDistance / 1000; // Convert to kilometers
+        }
+
+        function loadPathFromFile() {
+            const color = document.getElementById("pathColor").value;
+            const weight = parseInt(document.getElementById("pathWeight").value);
+
+            // Load the JSON file generated by the Python script
+            fetch('path_coordinates.json')
+                .then(response => response.json())
+                .then(data => {
+                    // Convert GeoJSON coordinates to Google Maps format
+                    pathCoordinates = data.geometry.coordinates.map(coord => ({
+                        lat: coord[1], // GeoJSON is [lng, lat], Google Maps expects {lat, lng}
+                        lng: coord[0]
+                    }));
+                    
+                    drawPath(pathCoordinates, color, weight);
+                })
+                .catch(error => {
+                    console.error('Error loading path file:', error);
+                    alert('Error loading path file. Make sure path_coordinates.json exists and was generated by running the Python script.');
+                });
+        }
+
+        function fitToRoute() {
+            if (pathCoordinates.length > 0) {
+                const bounds = new google.maps.LatLngBounds();
+                pathCoordinates.forEach(coord => bounds.extend(coord));
+                map.fitBounds(bounds);
+                
+                // Add some padding and limit zoom
+                google.maps.event.addListenerOnce(map, 'bounds_changed', function() {
+                    map.setZoom(Math.min(map.getZoom(), 15));
+                });
+            }
+        }
+
+        // Event listeners for real-time updates
+        document.getElementById("pathColor").addEventListener("change", function() {
+            if (currentPath) {
+                currentPath.setOptions({ strokeColor: this.value });
+            }
+        });
+
+        document.getElementById("pathWeight").addEventListener("change", function() {
+            if (currentPath) {
+                currentPath.setOptions({ strokeWeight: parseInt(this.value) });
+            }
+        });
+    </script>
+
+    <!-- Load Google Maps API with geometry library -->
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=geometry&callback=initMap">
+    </script>
+
+    <div style="margin-top: 20px; padding: 20px; background-color: #f9f9f9; border-radius: 5px;">
+        <h3>Instructions:</h3>
+        <ol>
+            <li><strong>Replace <code>YOUR_API_KEY</code></strong> with your actual Google Maps API key</li>
+            <li><strong>Run the Python script</strong> (<code>python astar_optimized.py</code>) to generate the path coordinates</li>
+            <li><strong>Open this file</strong> in a web browser to see the visualization</li>
+            <li><strong>Customize</strong> the path color and weight using the controls above</li>
+        </ol>
+        
+        <h3>Features:</h3>
+        <ul>
+            <li>✅ Displays A* path optimized for streetlight visibility</li>
+            <li>✅ Shows start (green) and end (red) markers</li>
+            <li>✅ Calculates approximate path distance</li>
+            <li>✅ Automatically fits map to show entire path</li>
+            <li>✅ Real-time path customization</li>
+        </ul>
+    </div>
+</body>
+</html> 
