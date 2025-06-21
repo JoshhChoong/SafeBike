@@ -137,19 +137,22 @@ def test_output_files():
     
     return all_files_exist
 
-def cleanup_test_files():
+def cleanup_test_files(keep_files=True):
     """Clean up test files"""
-    print("\n=== Cleaning Up Test Files ===")
+    if not keep_files:
+        print("\n=== Cleaning Up Test Files ===")
     
-    test_files = [
-        'test_collisions.csv',
-        'test_bike_lanes.csv'
-    ]
+        test_files = [
+            'test_collisions.csv',
+            'test_bike_lanes.csv'
+        ]
     
-    for file in test_files:
-        if os.path.exists(file):
-            os.remove(file)
-            print(f"✓ Removed {file}")
+        for file in test_files:
+            if os.path.exists(file):
+                os.remove(file)
+                print(f"✓ Removed {file}")
+    else:
+        print("\n Kept test files")
 
 def main():
     """Run full preprocessing test"""
@@ -177,14 +180,9 @@ def main():
         print("\n⚠️  Some output files missing")
     
     # Cleanup
-    cleanup_test_files()
-    
-    print("\n" + "=" * 40)
+    cleanup_test_files(keep_files=True)
     print("✅ PREPROCESSING TEST COMPLETED SUCCESSFULLY!")
-    print("\nNext steps:")
-    print("1. Review the test_output/ directory")
-    print("2. Integrate with your existing astar.py")
-    print("3. Modify route optimization to use safety_weights.json")
+    
 
 if __name__ == "__main__":
     main()
