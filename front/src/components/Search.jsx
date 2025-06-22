@@ -7,8 +7,8 @@ function Search() {
             <p>Search</p>
             <div className='search-bar'>
                 <input type="text" id='search'></input>
-                {/* <i className="bi bi-search"></i> */}
-                <p>ICON</p>
+                <i className="bi bi-search"></i>
+                
             </div>
             
         
