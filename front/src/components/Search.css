@@ -42,6 +42,12 @@ span button {
     border: none;
 }
 
+.exit-button {
+    background-color: var(--secondary);
+    font-weight: bold;
+    font-size: large;
+}
+
 span h2 {
     font-family: var(--main-font);
 }

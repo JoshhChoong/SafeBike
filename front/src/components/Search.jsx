@@ -10,7 +10,11 @@ function Search() {
                 <i className="bi bi-search"></i>
             </div>
 
-            <button>Start Route</button>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+                <button>Start Route</button>
+                <button className='exit-button'><i className="bi bi-x"></i></button>
+            </div>
+            
             
         
         
