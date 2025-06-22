@@ -6,6 +6,8 @@
   --accent: #F4E55A;
   --secondary: #D9F0F4;
   --text-color: black;
+  --line-blue: #84e6f8;
+  --line-blue: #6ded89;
 
   --font-size-main: clamp(1rem, 7vw, 3rem);
   --font-size-sec: clamp(1rem, 3.5vw, 2.5rem);

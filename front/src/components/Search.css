@@ -27,6 +27,7 @@ span {
 
 
     line-height: 1.75rem;
+    z-index: 5;
 }
 
 span button {
