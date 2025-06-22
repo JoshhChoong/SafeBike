@@ -4,7 +4,7 @@ import osmnx as ox
 import json
 import heapq
 import time
-from astar import a_star, path_to_polyline_coordinates, save_path_to_json
+from astar_optimized import path_to_polyline_coordinates, save_path_to_json
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
@@ -21,7 +21,7 @@ with open('kwtest1_geometry_only.json') as f:
 print("Adding lighting scores to graph edges...")
 for u, v, data in G.edges(data=True):
     edge_id = f"{u}_{v}"
-    data['lighting_score'] = light_data.get(edge_id, 1.0)  
+    data['lighting_score'] = light_data.get(edge_id, 1.0)  # TODO: make this a function of the streetlight brightness
     data['custom_weight'] = data['length'] / data['lighting_score']
 
 print("Graph loaded successfully!")

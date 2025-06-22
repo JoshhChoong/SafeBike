@@ -2,12 +2,46 @@ import osmnx as ox
 import json
 import heapq
 import time
+import math
 
 def get_nearest_node_safe(G, coords):
     try:
         return ox.nearest_nodes(G, coords[1], coords[0])
     except AttributeError:
-        return ox.get_nearest_node(G, coords)
+        # Fallback for older OSMnx versions - use distance-based approach
+        min_dist = float('inf')
+        nearest_node = None
+        for node in G.nodes():
+            node_coords = (G.nodes[node]['y'], G.nodes[node]['x'])
+            dist = ((coords[0] - node_coords[0])**2 + (coords[1] - node_coords[1])**2)**0.5
+            if dist < min_dist:
+                min_dist = dist
+                nearest_node = node
+        return nearest_node
+
+def haversine(lon1, lat1, lon2, lat2):
+    """Calculate the great-circle distance between two points (in meters)"""
+    R = 6371000  # Earth radius in meters
+    phi1, phi2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+    a = math.sin(dphi/2)**2 + math.cos(phi1)*math.cos(phi2)*math.sin(dlambda/2)**2
+    return 2*R*math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+def get_edge_midpoint(G, u, v):
+    """Get the midpoint coordinates of an edge"""
+    y1, x1 = G.nodes[u]['y'], G.nodes[u]['x']
+    y2, x2 = G.nodes[v]['y'], G.nodes[v]['x']
+    return ((y1 + y2) / 2, (x1 + x2) / 2)
+
+def find_nearest_feature(midpoint, feature_data, max_distance):
+    """Find if there's a feature within max_distance of the midpoint"""
+    for feature in feature_data['features']:
+        lon, lat = feature['geometry']['coordinates']
+        dist = haversine(midpoint[1], midpoint[0], lon, lat)
+        if dist <= max_distance:
+            return True
+    return False
 
 def load_graph_for_area(center_lat, center_lng, radius_km=5):
     print(f"Loading graph for area around ({center_lat}, {center_lng}) with radius {radius_km}km...")
@@ -15,18 +49,71 @@ def load_graph_for_area(center_lat, center_lng, radius_km=5):
     print(f"Graph loaded with {len(G.nodes)} nodes and {len(G.edges)} edges")
     return G
 
-def load_lighting_data():
-    print("Loading streetlight data...")
-    with open('kwtest1_geometry_only.json') as f:
+def load_cycling_data():
+    print("Loading cycling lane data...")
+    with open('cycling_lanes.json') as f:
         return json.load(f)
 
-def apply_lighting_weights(G, light_data):
-    print("Adding lighting scores to graph edges...")
+def load_safety_weights():
+    print("Loading Safety Weights...")
+    with open('test_output/safety_weights.json') as f:
+        return json.load(f)
+
+def load_accident_data():
+    print("Loading accident data...")
+    with open('car_accidents.json') as f:
+        return json.load(f)
+
+def apply_safety_weights(G, safety_weights):
+    print("Adding safety scores to graph edges...")
+    total_edges = 0
+    edges_with_safety_points = 0
+    
     for u, v, data in G.edges(data=True):
-        print(u,v,data)
-        edge_id = f"{u}_{v}"
-        data['lighting_score'] = light_data.get(edge_id, 1.0)  
-        data['custom_weight'] = data['length'] / data['lighting_score']
+        total_edges += 1
+        # Get the midpoint of the edge
+        midpoint = get_edge_midpoint(G, u, v)
+        
+        # Find all safety weight points within 50 meters
+        nearby_weights = []
+        total_weight = 0.0
+        
+        for coord_key, safety_weight in safety_weights.items():
+            try:
+                # Parse the coordinate key (format: "lat,lng")
+                lat_str, lng_str = coord_key.split(',')
+                lat = float(lat_str)
+                lng = float(lng_str)
+                
+                # Calculate distance from edge midpoint to this safety point
+                distance = haversine(midpoint[1], midpoint[0], lng, lat)
+                
+                # If within 50 meters, include this point
+                if distance <= 50:
+                    # Use inverse distance weighting (closer points have more influence)
+                    weight_factor = 1.0 / (distance + 1)  # Add 1 to avoid division by zero
+                    nearby_weights.append((safety_weight, weight_factor))
+                    total_weight += weight_factor
+            except (ValueError, IndexError):
+                # Skip malformed coordinate keys
+                continue
+        
+        # Calculate weighted average safety weight
+        if nearby_weights and total_weight > 0:
+            edges_with_safety_points += 1
+            weighted_sum = sum(sw * wf for sw, wf in nearby_weights)
+            average_safety_weight = weighted_sum / total_weight
+        else:
+            # Default to 1.0 if no nearby safety points found
+            average_safety_weight = 1.0
+        
+        # Use the average safety weight as the divisor
+        divisor = average_safety_weight
+        
+        data['safety_divisor'] = divisor
+        data['custom_weight'] = data['length'] / divisor
+    
+    print(f"Safety weights applied to {edges_with_safety_points} out of {total_edges} edges (within 50m radius)")
 
 def heuristic(a, b):
     # Always use simple Euclidean distance between two (lat, lng) tuples
@@ -126,8 +213,8 @@ def find_path_optimized(start_coords, end_coords, radius_km=5):
     center_lat = (start_coords[0] + end_coords[0]) / 2
     center_lng = (start_coords[1] + end_coords[1]) / 2
     G = load_graph_for_area(center_lat, center_lng, radius_km)
-    light_data = load_lighting_data()
-    apply_lighting_weights(G, light_data)
+    safety_weights_data = load_safety_weights()
+    apply_safety_weights(G, safety_weights_data)
     origin_node = get_nearest_node_safe(G, start_coords)
     destination_node = get_nearest_node_safe(G, end_coords)
     print(f"Origin node: {origin_node}")
