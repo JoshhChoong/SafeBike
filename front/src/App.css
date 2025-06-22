@@ -24,7 +24,15 @@
 .wrapper-content {
   width: 100%;
   max-width: clamp(1000px, 80%, 2000px);
-  display: grid;
+  /* display: grid; */
+  height: 100%;
+ 
+}
+
+.main-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 *, *::before, *::after {
