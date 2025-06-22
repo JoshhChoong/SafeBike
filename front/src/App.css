@@ -1,0 +1,62 @@
+:root {
+
+  --main-color: white;
+  --accent: #F4E55A;
+  --secondary: #D9F0F4;
+  --text-color: black;
+
+  --font-size-main: clamp(1rem, 7vw, 3rem);
+  --font-size-sec: clamp(1rem, 3.5vw, 2.5rem);
+  --font-size-text: clamp(1rem, 1vw, 1rem);
+}
+
+
+.wrapper {
+  font-size: var(--font-size-text);
+  color: var(--text-color);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+}
+
+.wrapper-content {
+  width: 100%;
+  max-width: clamp(1000px, 80%, 2000px);
+  /* display: grid; */
+  height: 100%;
+ 
+}
+
+.main-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+*, *::before, *::after {
+	box-sizing: border-box;
+}
+* {
+	margin: 0;
+}
+body {
+  background-color: var(--main-color);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+img, picture, video, canvas, svg {
+	display: block;
+	max-width: 100%;
+}
+input, button, textarea, select {
+	font: inherit;
+}
+p, h1, h2, h3, h4, h5, h6 {
+	overflow-wrap: break-word;
+}
+#root, #__next {
+	isolation: isolate;
+}
+

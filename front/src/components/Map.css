@@ -1,0 +1,12 @@
+.map-content {
+
+    width: 100vw;
+    height: 100vh;
+    background-color: var(--primary);
+    position: absolute;
+    z-index: -10;
+    top: 0;
+    right: 0;
+    
+
+}

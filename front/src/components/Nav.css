@@ -1,0 +1,27 @@
+header {
+    /* The header tag helps w/ semantic HTML and full bleed */
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+}
+
+nav {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    /* align-items: center; */
+    background-color: var(--secondary);
+    /* color: var(--main-color); */
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: clamp(32px, 1rem, 2rem);
+}
+
+nav ul {
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: row;
+    gap: clamp(16px, 20vw, 15rem);
+}
