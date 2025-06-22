@@ -73,3 +73,4 @@ google_maps_polyline.js # Data files - too large for GitHub
 toronto_collisions.csv
 cycling_network.csv
 *.csv
+.vercel
