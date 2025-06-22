@@ -10,12 +10,13 @@ nav {
     justify-content: center;
     width: 100%;
     /* align-items: center; */
-    background-color: var(--secondary);
+    background-color: var(--accent);
     /* color: var(--main-color); */
     position: sticky;
     top: 0;
     z-index: 100;
-    padding: clamp(32px, 1rem, 2rem);
+    padding: clamp(16px,0.5rem, 1rem);
+    font-family: var(--main-font);
 }
 
 nav ul {
