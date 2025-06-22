@@ -1,9 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-
-# Import your existing functions
-from astar_optimized import find_path_optimized, path_to_polyline_coordinates
+import gc
 
 app = Flask(__name__)
 CORS(app)
@@ -15,24 +13,43 @@ def health():
 @app.route('/api/route', methods=['POST'])
 def find_route():
     try:
+        import osmnx as ox
+        import networkx as nx
+        
         data = request.get_json()
         start_coords = (data['start_lat'], data['start_lng'])
         end_coords = (data['end_lat'], data['end_lng'])
         
-        G, path = find_path_optimized(start_coords, end_coords, radius_km=5)
+        # Use smaller radius to reduce memory usage
+        center_lat = (start_coords[0] + end_coords[0]) / 2
+        center_lng = (start_coords[1] + end_coords[1]) / 2
         
-        if path:
-            coordinates = path_to_polyline_coordinates(G, path)
-            formatted_coords = [{"lat": coord[0], "lng": coord[1]} for coord in coordinates]
-            
-            return jsonify({
-                "success": True,
-                "coordinates": formatted_coords,
-                "path_info": {"coordinate_count": len(coordinates)}
-            })
-        else:
-            return jsonify({"success": False, "error": "No route found"})
-            
+        # Smaller graph = less memory
+        G = ox.graph_from_point((center_lat, center_lng), dist=2000, network_type='bike', simplify=True)
+        
+        # Find nearest nodes
+        orig_node = ox.nearest_nodes(G, start_coords[1], start_coords[0])
+        dest_node = ox.nearest_nodes(G, end_coords[1], end_coords[0])
+        
+        # Simple shortest path
+        path = nx.shortest_path(G, orig_node, dest_node, weight='length')
+        
+        # Convert to coordinates
+        coordinates = []
+        for node in path:
+            node_data = G.nodes[node]
+            coordinates.append({"lat": node_data['y'], "lng": node_data['x']})
+        
+        # Clean up memory
+        del G
+        gc.collect()
+        
+        return jsonify({
+            "success": True,
+            "coordinates": coordinates,
+            "path_info": {"coordinate_count": len(coordinates)}
+        })
+        
     except Exception as e:
         return jsonify({"success": False, "error": str(e)})
 
