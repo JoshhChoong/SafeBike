@@ -15,3 +15,9 @@ def calculate_edge_weight(edge, current_time, vehicle_type):
 
 
 ## will code this myself l8
+
+def get_rush_hour_multiplier():
+    return 
+
+def get_vehicle_multiplier():
+    return 
