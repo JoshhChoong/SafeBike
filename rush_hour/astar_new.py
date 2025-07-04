@@ -42,3 +42,18 @@ def calculate_badness(road, time):
         badness = make_it_worse(badness)
     
     return badness
+
+
+
+def analyze_daily_accidents():
+    daily_counts = []
+    for day in range(7):
+        count = int(input(f"Day {day+1} accidents: "))
+        daily_counts.append(count)
+    
+    print(f"Total week: {sum(daily_counts)}")
+    print(f"Average: {sum(daily_counts)/7:.1f}")
+    print(f"Worst day: {max(daily_counts)}")
+
+
+analyze_daily_accidents()
