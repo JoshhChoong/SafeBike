@@ -57,3 +57,19 @@ def analyze_daily_accidents():
 
 
 analyze_daily_accidents()
+
+def calculate_safety_score(accidents, distance_km):
+    return accidents / distance_km
+
+def is_rush_hour(hour):
+    return hour in [7, 8, 17, 18, 19]
+
+def classify_danger_level(accidents):
+    if accidents >= 20:
+        return "EXTREME"
+    elif accidents >= 10:
+        return "HIGH"
+    elif accidents >= 5:
+        return "MEDIUM"
+    else:
+        return "LOW"
