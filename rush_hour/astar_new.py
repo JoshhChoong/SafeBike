@@ -90,4 +90,12 @@ def load_toronto_collisions(filename):
     collisions = []
     with open(filename, 'r') as file:
         reader = csv.DictReader(file)
+        for row in reader:
+            if row['BICYCLE'] == 'YES':  
+                collisions.append({
+                    'lat': float(row['LAT_WGS84']),
+                    'long': float(row['LONG_WGS84']),
+                    'hour': int(row['OCC_HOUR']),
+                    'year': int(row['OCC_YEAR'])
+                })
     return collisions
