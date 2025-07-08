@@ -1,3 +1,5 @@
+import csv
+
 def calculate_edge_weight(edge, current_time, vehicle_type):
     # Base weight (distance + historical collision risk)
     base_weight = edge.length * edge.collision_risk
@@ -83,3 +85,9 @@ intersections = [
 for intersection in intersections:
     danger = classify_danger_level(intersection["accidents"])
     print(f"{intersection['name']}: {danger} risk")
+
+def load_toronto_collisions(filename):
+    collisions = []
+    with open(filename, 'r') as file:
+        reader = csv.DictReader(file)
+    return collisions
