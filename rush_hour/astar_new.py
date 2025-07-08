@@ -73,3 +73,13 @@ def classify_danger_level(accidents):
         return "MEDIUM"
     else:
         return "LOW"
+    
+intersections = [
+    {"name": "DVP & Gardiner", "accidents": 45},
+    {"name": "King & Spadina", "accidents": 12},
+    {"name": "Bloor & Bathurst", "accidents": 8}
+]
+
+for intersection in intersections:
+    danger = classify_danger_level(intersection["accidents"])
+    print(f"{intersection['name']}: {danger} risk")
