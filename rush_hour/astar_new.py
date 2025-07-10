@@ -99,3 +99,9 @@ def load_toronto_collisions(filename):
                     'year': int(row['OCC_YEAR'])
                 })
     return collisions
+
+collisions = load_toronto_collisions('toronto_collisions.csv')
+print(f"Bicycle accidents: {len(collisions)}")
+
+rush_hour_accidents = [c for c in collisions if is_rush_hour(c['hour'])]
+print(f"Rush hour bicycle accidents: {len(rush_hour_accidents)}")
